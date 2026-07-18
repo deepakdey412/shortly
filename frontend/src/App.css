@@ -144,6 +144,8 @@ button:disabled {
 .result p {
   margin-bottom: var(--spacing-sm);
   font-size: 0.875rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .result p:last-child {
@@ -153,11 +155,14 @@ button:disabled {
 .result strong {
   color: var(--color-text);
   font-weight: 600;
+  display: inline-block;
+  margin-right: var(--spacing-xs);
 }
 
 .result a {
   color: var(--color-primary);
   text-decoration: none;
+  word-break: break-all;
 }
 
 .result a:hover {

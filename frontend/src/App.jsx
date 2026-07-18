@@ -150,6 +150,9 @@ function App() {
                 value={formData.expiresAt}
                 onChange={handleInputChange}
               />
+              <small style={{ color: 'var(--color-text-light)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                Optional: Set when this short URL should expire
+              </small>
             </label>
 
             <button type="submit" disabled={loading}>
@@ -171,8 +174,21 @@ function App() {
                 <strong>Short code:</strong> {result.shortCode}
               </p>
               <p>
-                <strong>Created:</strong> {new Date(result.createdAt).toLocaleString()}
+                <strong>Created:</strong> {new Date(result.createdAt).toLocaleString('en-IN', {
+                  timeZone: 'Asia/Kolkata',
+                  dateStyle: 'medium',
+                  timeStyle: 'short'
+                })}
               </p>
+              {result.expiresAt && (
+                <p>
+                  <strong>Expires:</strong> {new Date(result.expiresAt).toLocaleString('en-IN', {
+                    timeZone: 'Asia/Kolkata',
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                  })}
+                </p>
+              )}
             </div>
           )}
         </article>
@@ -212,6 +228,22 @@ function App() {
               <p>
                 <strong>Created by:</strong> {stats.createdBy}
               </p>
+              <p>
+                <strong>Created at:</strong> {new Date(stats.createdAt).toLocaleString('en-IN', {
+                  timeZone: 'Asia/Kolkata',
+                  dateStyle: 'medium',
+                  timeStyle: 'short'
+                })}
+              </p>
+              {stats.expiresAt && (
+                <p>
+                  <strong>Expires at:</strong> {new Date(stats.expiresAt).toLocaleString('en-IN', {
+                    timeZone: 'Asia/Kolkata',
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                  })}
+                </p>
+              )}
             </div>
           )}
         </article>
