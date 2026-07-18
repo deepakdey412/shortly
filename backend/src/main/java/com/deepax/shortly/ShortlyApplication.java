@@ -1,4 +1,4 @@
-package com.shahbytes.tinylink;
+package com.deepax.shortly;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -6,10 +6,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-public class TinylinkApplication {
+public class ShortlyApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(TinylinkApplication.class, args);
+		SpringApplication.run(ShortlyApplication.class, args);
 	}
 
 }

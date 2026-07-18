@@ -1,6 +1,6 @@
-package com.shahbytes.tinylink.config;
+package com.deepax.shortly.config;
 
-import com.shahbytes.tinylink.services.UrlShortenerService;
+import com.deepax.shortly.services.UrlShortenerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 public class CleanupScheduler {
     private final UrlShortenerService urlShortenerService;
 
-    @Scheduled(fixedRateString = "#{${tinylink.cleanup.interval-minutes} * 60 * 1000}")
+    @Scheduled(fixedRateString = "#{${shortly.cleanup.interval-minutes} * 60 * 1000}")
     public void cleanupExpiredUrls(){
         try{
             log.debug("Running scheduled cleanup of expired URLs");

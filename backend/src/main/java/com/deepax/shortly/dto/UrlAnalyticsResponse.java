@@ -1,6 +1,6 @@
-package com.shahbytes.tinylink.dto;
+package com.deepax.shortly.dto;
 
-import com.shahbytes.tinylink.models.ClickEvent;
+import com.deepax.shortly.models.ClickEvent;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

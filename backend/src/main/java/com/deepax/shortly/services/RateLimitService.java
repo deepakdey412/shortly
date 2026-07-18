@@ -1,16 +1,18 @@
-package com.shahbytes.tinylink.services;
-
-import com.shahbytes.tinylink.models.RateLimitData;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Service;
+package com.deepax.shortly.services;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Service;
+
+import com.deepax.shortly.models.RateLimitData;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -19,10 +21,10 @@ public class RateLimitService {
 
     private final RedisTemplate<String, Object> redisTemplate;
 
-    @Value("${tinylink.rate-limit.requests-per-minute}")
+    @Value("${shortly.rate-limit.requests-per-minute}")
     private int requestsPerMinute;
 
-    @Value("${tinylink.rate-limit.requests-per-hour}")
+    @Value("${shortly.rate-limit.requests-per-hour}")
     private int requestsPerHour;
 
     private final ConcurrentHashMap<String, RateLimitData> rateLimitData = new ConcurrentHashMap<>();

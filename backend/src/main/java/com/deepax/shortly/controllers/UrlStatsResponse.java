@@ -1,11 +1,11 @@
-package com.shahbytes.tinylink.controllers;
+package com.deepax.shortly.controllers;
+
+import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @Data
 @Builder

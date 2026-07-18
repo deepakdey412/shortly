@@ -1,21 +1,29 @@
-package com.shahbytes.tinylink.controllers;
+package com.deepax.shortly.controllers;
 
-import com.shahbytes.tinylink.dto.ShortenUrlRequest;
-import com.shahbytes.tinylink.dto.ShortenUrlResponse;
-import com.shahbytes.tinylink.dto.UrlAnalyticsResponse;
-import com.shahbytes.tinylink.services.RateLimitService;
-import com.shahbytes.tinylink.services.UrlShortenerService;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.deepax.shortly.dto.ShortenUrlRequest;
+import com.deepax.shortly.dto.ShortenUrlResponse;
+import com.deepax.shortly.dto.UrlAnalyticsResponse;
+import com.deepax.shortly.services.RateLimitService;
+import com.deepax.shortly.services.UrlShortenerService;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
@@ -109,6 +117,10 @@ public class UrlShortenerController {
         }
     }
 
+    @GetMapping("/health")
+    public ResponseEntity<?> health(){
+        return ResponseEntity.ok(Map.of("status", "UP", "service", "shortly"));
+    }
 
     private String getClientIp(HttpServletRequest httpRequest) {
         String xForwardedFor = httpRequest.getHeader("X-Forwarded-For");

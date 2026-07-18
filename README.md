@@ -1,94 +1,137 @@
-# TinyLink
+# Shortly
 
-TinyLink is a small URL shortener built for learning system design concepts with a simple Spring Boot backend, an Angular frontend, and Redis for caching and distributed rate-limit state.
+Shortly is a URL shortener built with Spring Boot backend, React frontend, and Redis for caching and distributed rate-limit state. It demonstrates request flow, redirects, caching, rate limiting, click analytics, scheduled cleanup, and containerized deployment.
 
-This project is intentionally small and easy to inspect. It demonstrates request flow, redirects, caching, rate limiting, click analytics, scheduled cleanup, and containerized local development.
+## Features
 
-## What It Does
+- Create short URLs from long URLs
+- Optional custom aliases
+- Optional expiration times
+- Redirect short URLs to original URLs
+- Track click counts and analytics
+- Per-client/IP rate limiting
+- Redis-backed caching
+- Scheduled cleanup of expired URLs
 
-- Create a short URL from a long URL
-- Optionally accept a custom alias
-- Optionally set an expiration time
-- Redirect a short URL to the original URL
-- Track click counts for each short URL
-- Return basic stats and analytics data
-- Apply per-client/IP rate limiting on the shorten API
-- Cache short-code lookups in Redis
-- Periodically mark expired URLs inactive
+## Architecture
 
-## Current Architecture
+- **Frontend**: React 18 + Vite
+- **Backend**: Spring Boot 4.1.0 (Java 17)
+- **Cache & State**: Redis 7
+- **Deployment**: Docker Compose
 
-The current codebase uses in-memory Java collections as the main application store.
+### Data Storage
 
-- `urlMappings` stores short code -> `UrlData`
-- `clickAnalytics` stores short code -> list of `ClickEvent`
+The application uses in-memory Java collections as the main store:
+
+- `urlMappings` stores short code → `UrlData`
+- `clickAnalytics` stores short code → list of `ClickEvent`
 - Redis stores:
-  - cached `shortCode -> originalUrl` entries
-  - serialized `RateLimitData` entries for rate limiting
-
-- Frontend: Angular SPA
-- Backend: Spring Boot REST API
-- Redis: cache + shared rate-limit state
-- Docker Compose: local orchestration
+  - Cached `shortCode → originalUrl` entries
+  - Serialized `RateLimitData` for rate limiting
 
 ## Project Structure
 
-```text
-tiny-link/
-|-- backend/
-|   |-- src/main/java/com/shaybytes/tinylink/
-|   |   |-- config/
-|   |   |-- controllers/
-|   |   |-- dto/
-|   |   |-- models/
-|   |   |-- services/
-|   |-- src/main/resources/application.yml
-|   |-- Dockerfile
-|   `-- pom.xml
-|-- frontend/
-|   |-- src/
-|   |   |-- app/app.component.ts
-|   |   `-- main.ts
-|   |-- Dockerfile
-|   `-- package.json
-|-- docker-compose.yml
-`-- README.md
 ```
-
-## Services and Ports
-
-- Frontend: `http://localhost:8082`
-- Backend API: `http://localhost:8080`
-- Redis: `localhost:6379`
+shortly/
+├── backend/
+│   ├── src/main/java/com/deepax/shortly/
+│   │   ├── config/
+│   │   ├── controllers/
+│   │   ├── dto/
+│   │   ├── models/
+│   │   └── services/
+│   ├── src/main/resources/application.yaml
+│   ├── Dockerfile
+│   └── pom.xml
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx
+│   │   ├── App.css
+│   │   ├── index.css
+│   │   └── main.jsx
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   ├── vite.config.js
+│   └── package.json
+├── docker-compose.yml
+└── README.md
+```
 
 ## Quick Start
 
+### Prerequisites
+
+- Docker and Docker Compose installed
+- Ports 8080 (backend), 8082 (frontend), and 6379 (Redis) available
+
+### Running on EC2 or Local Machine
+
 From the project root:
 
-```powershell
+```bash
 docker compose up --build
 ```
 
-Then open:
+Access the application:
 
-- Frontend UI: `http://localhost:8082`
-- Backend health endpoint: `http://localhost:8080/api/health`
+- **Frontend UI**: http://localhost:8082
+- **Backend API**: http://localhost:8080/api/health
+- **Backend Docs**: http://localhost:8080/api/
 
-To stop:
+### Stopping the Application
 
-```powershell
+```bash
 docker compose down
 ```
 
-To force a full rebuild/recreate:
+To remove volumes and force a clean rebuild:
 
-```powershell
-docker compose up -d --build --force-recreate
+```bash
+docker compose down -v
+docker compose up --build --force-recreate
 ```
+
+## Environment Configuration
+
+### Environment Variables
+
+The application can be configured using environment variables:
+
+**Backend (application.yaml overrides):**
+
+- `REDIS_HOST` - Redis hostname (default: `localhost`, Docker: `redis`)
+- `REDIS_PORT` - Redis port (default: `6379`)
+- `SHORTLY_BASE_URL` - Base URL for generated short links (default: `http://localhost:8080`)
+- `SHORTLY_CORS_ALLOWED_ORIGINS` - Comma-separated CORS origins (default: `http://localhost:4200,http://localhost:8082`)
+
+**Example for EC2 deployment:**
+
+Create a `.env` file in the project root:
+
+```env
+SHORTLY_BASE_URL=http://your-ec2-public-ip:8080
+SHORTLY_CORS_ALLOWED_ORIGINS=http://your-ec2-public-ip:8082
+```
+
+Then run:
+
+```bash
+docker compose --env-file .env up --build
+```
+
+### Docker Compose Configuration
+
+The `docker-compose.yml` uses proper Docker networking:
+
+- All services communicate via the `shortly-network` bridge network
+- Backend connects to Redis using service name `redis` (not `localhost`)
+- Frontend proxies API requests to backend using service name `backend`
+- Health checks ensure services start in the correct order
 
 ## API Endpoints
 
-### Create short URL
+### Create Short URL
 
 ```http
 POST /api/shorten
@@ -101,349 +144,248 @@ Content-Type: application/json
 }
 ```
 
-### Redirect to original URL
+### Redirect to Original URL
 
 ```http
 GET /api/{shortCode}
 ```
 
-Note: the generated short URL now points to `/api/{shortCode}` because that is the actual backend redirect route.
-
-### Get basic stats
+### Get Basic Stats
 
 ```http
 GET /api/stats/{shortCode}
 ```
 
-### Get analytics
+### Get Analytics
 
 ```http
 GET /api/analytics/{shortCode}
 ```
 
-### Delete short URL
+### Delete Short URL
 
 ```http
 DELETE /api/{shortCode}
 ```
 
-### Health check
+### Health Check
 
 ```http
 GET /api/health
 ```
 
-## End-to-End Flow
+## Development
 
-### 1. Create short URL
+### Backend Development
 
-1. The Angular frontend sends `POST /api/shorten`
-2. The backend controller extracts the client IP
-3. The rate limiter checks whether that client is allowed
-4. The service either uses the provided custom alias or generates a random Base62 code
-5. The backend stores `UrlData` in the in-memory map
-6. The backend caches `shortCode -> originalUrl` in Redis
-7. The backend returns a response containing:
-   - `shortUrl`
-   - `shortCode`
-   - `originalUrl`
-   - timestamps
-
-### 2. Open short URL
-
-1. The browser requests `/api/{shortCode}`
-2. The backend first checks Redis cache for the original URL
-3. If not found in Redis, it checks the in-memory `urlMappings`
-4. If the URL is expired, it is marked inactive and the request returns `404`
-5. If found, the backend records a click and responds with HTTP `302 Found`
-6. The browser follows the redirect to the original URL
-
-### 3. Load stats
-
-1. The frontend sends `GET /api/stats/{shortCode}`
-2. The backend reads `UrlData`
-3. The backend returns click count, creator IP, active status, and timestamps
-
-### 4. Scheduled cleanup
-
-1. Spring scheduling is enabled in the application
-2. `CleanupScheduler` runs every configured interval
-3. Expired URLs are marked inactive
-4. Related Redis cache entries are deleted
-
-## Core Backend Components
-
-### `UrlShortenerController`
-
-Responsible for HTTP endpoints:
-
-- create short URL
-- redirect
-- get stats
-- get analytics
-- delete URL
-- health check
-
-### `UrlShortenerServiceImpl`
-
-Responsible for:
-
-- generating short codes
-- storing URL data
-- redirect lookup
-- click tracking
-- stats/analytics response building
-- Redis cache read/write
-- cleanup of expired URLs
-
-### `RateLimitServiceImpl`
-
-Responsible for:
-
-- checking whether a client/IP can call the shorten API
-- reading and writing `RateLimitData` from Redis
-- falling back to local memory if Redis is unavailable
-
-### `RedisConfig`
-
-Configures `RedisTemplate<String, Object>` and the JSON serializer used to store Java objects in Redis.
-
-Important implementation detail:
-
-- `LocalDateTime` support is explicitly configured through Jackson's Java Time module so `RateLimitData` can be serialized correctly.
-
-## Models and What They Mean
-
-### `UrlData`
-
-Represents one shortened URL.
-
-Contains:
-
-- original URL
-- short code
-- created/expiry timestamps
-- click count
-- creator IP
-- active flag
-
-### `ClickEvent`
-
-Represents one redirect/click event.
-
-Contains:
-
-- timestamp
-- IP address
-- user agent
-- referrer
-- optional country/city fields
-
-### `RateLimitData`
-
-Represents the temporary rate-limit state for one client/IP.
-
-Contains:
-
-- `requestCount`
-- `windowStart`
-- `lastRequest`
-
-Important:
-
-- `requestCount` is not the total number of clicks on a URL
-- it is only the temporary request counter used for rate limiting
-
-## Redis Usage
-
-Redis is used in two places.
-
-### 1. URL cache
-
-Key shape:
-
-```text
-url:{shortCode}
+```bash
+cd backend
+./mvnw spring-boot:run
 ```
 
-Value:
+Backend runs at: http://localhost:8080
 
-- original URL string
+### Frontend Development
 
-Purpose:
-
-- fast redirect lookup
-- demonstrate cache-aside pattern
-- reduce repeated reads from the main store
-
-TTL:
-
-- configured through `tinylink.cache.ttl-minutes`
-
-Even though URLs are not editable today, TTL is still useful for:
-
-- automatic cleanup of cold cache entries
-- reducing memory growth
-- avoiding stale values after delete/expiry
-
-### 2. Rate-limit state
-
-Key shape:
-
-```text
-ratelimit:{clientIp}
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
-Value:
-
-- serialized `RateLimitData`
-
-Purpose:
-
-- share rate-limit state across app instances
-- avoid relying only on local Java memory
-
-TTL:
-
-- one hour on save
-
-This prevents unused rate-limit keys from living forever.
-
-## Rate Limiting
-
-Rate limiting is checked before shortening a URL.
-
-Current behavior:
-
-- per client/IP
-- minute threshold configurable
-- hour threshold configurable
-- Redis-backed when available
-- falls back to in-memory storage if Redis fails
-
-High-level flow:
-
-1. Build Redis key from client IP
-2. Read `RateLimitData` from Redis
-3. If missing, use or create local in-memory state
-4. Check whether the current request is still in the same minute window
-5. Reset the minute counter if the old window expired
-6. Increment the request count if allowed
-7. Save the updated state back to Redis
-
-Important learning note:
-
-- `requestCount` is a rate-limit counter
-- `clickCount` is a URL analytics counter
-
-These are different and should not be confused.
-
-## Frontend UI Notes
-
-The Angular UI allows you to:
-
-- create short URLs
-- see the generated short URL
-- fetch stats for a short code
-
-The UI now explicitly explains the difference between:
-
-- rate-limit requests: per client/IP, temporary
-- URL clicks: per short URL, analytics
+Frontend dev server runs at: http://localhost:5173 with API proxy to backend.
 
 ## Configuration
 
-Main backend configuration is in:
+Main backend configuration is in `backend/src/main/resources/application.yaml`:
 
-- [backend/src/main/resources/application.yml](backend/src/main/resources/application.yml)
+**Shortly Settings:**
 
-Key settings:
+- `shortly.base-url` - Base URL for short links
+- `shortly.short-code.length` - Length of generated codes (default: 6)
+- `shortly.short-code.max-attempts` - Max generation attempts (default: 10)
+- `shortly.cache.ttl-minutes` - Redis cache TTL (default: 30)
+- `shortly.rate-limit.requests-per-minute` - Rate limit per minute (default: 2)
+- `shortly.rate-limit.requests-per-hour` - Rate limit per hour (default: 10)
+- `shortly.cleanup.interval-minutes` - Cleanup interval (default: 1)
 
-- `tinylink.base-url`
-- `tinylink.short-code.length`
-- `tinylink.short-code.max-attempts`
-- `tinylink.cache.ttl-minutes`
-- `tinylink.rate-limit.requests-per-minute`
-- `tinylink.rate-limit.requests-per-hour`
-- `tinylink.cleanup.interval-minutes`
+**Redis Configuration:**
 
-Redis connection settings use Spring Boot 3 style properties:
+- `spring.data.redis.host` - Redis host (env: `REDIS_HOST`)
+- `spring.data.redis.port` - Redis port (env: `REDIS_PORT`)
 
-- `spring.data.redis.host`
-- `spring.data.redis.port`
+## Core Components
 
-## Docker Notes
+### Backend Services
 
-`docker-compose.yml` starts:
+**UrlShortenerController**
+- HTTP endpoints for URL operations
+- Request validation and error handling
 
-- frontend
-- backend
-- redis
+**UrlShortenerService**
+- Short code generation (Base62)
+- URL storage and retrieval
+- Click tracking
+- Redis caching
+- Expiration cleanup
 
-The backend container is configured to reach Redis through:
+**RateLimitService**
+- Per-client/IP rate limiting
+- Redis-backed state sharing
+- Fallback to in-memory storage
 
-- `SPRING_DATA_REDIS_HOST`
-- `SPRING_DATA_REDIS_PORT`
+**WebConfig**
+- CORS configuration
+- Configurable allowed origins
 
-## What We Corrected
+**RedisConfig**
+- RedisTemplate configuration
+- JSON serialization with LocalDateTime support
 
-The following issues were fixed while working on this project:
+### Frontend Components
 
-- corrected Spring Boot Redis property naming to `spring.data.redis`
-- configured Redis serialization for `LocalDateTime`
-- made Redis cache operations fail-safe so URL creation does not crash if Redis is unavailable
-- fixed generated short URLs to point to `/api/{shortCode}`
-- updated the frontend UI text to explain rate-limit requests vs URL clicks
-- expanded comments in the rate-limiting implementation for learning purposes
+**App.jsx**
+- Main React component
+- URL shortening form
+- Stats retrieval form
+- Error handling and loading states
+
+## Click Analytics
+
+The application tracks detailed click events:
+
+- Timestamp
+- IP address
+- User agent
+- Referrer
+- Optional country/city (placeholders)
+
+Analytics endpoints provide:
+
+- Total clicks
+- Recent click events
+- Clicks by referrer
+- Clicks by hour
+- Clicks by day
+
+## Rate Limiting
+
+Rate limiting is applied per client IP:
+
+- Minute-based window (default: 2 requests/minute)
+- Hour-based window (default: 10 requests/hour)
+- Redis-backed for multi-instance support
+- Automatic window reset
+- Fallback to in-memory if Redis unavailable
+
+**Rate limit response:**
+
+```json
+{
+  "error": "Rate limit exceeded",
+  "remainingRequests": 0,
+  "timeUntilReset": 45
+}
+```
+
+## Redis Usage
+
+### URL Cache
+
+**Key format:** `url:{shortCode}`  
+**Value:** Original URL string  
+**TTL:** Configurable (default: 30 minutes)
+
+Purpose:
+- Fast redirect lookups
+- Reduced load on main storage
+- Automatic cleanup of cold entries
+
+### Rate Limit State
+
+**Key format:** `ratelimit:{clientIp}`  
+**Value:** Serialized `RateLimitData`  
+**TTL:** 1 hour
+
+Purpose:
+- Share rate limit state across app instances
+- Distributed rate limiting
+- Automatic cleanup
+
+## Scheduled Cleanup
+
+A Spring scheduled task runs periodically to:
+
+- Find expired URLs
+- Mark them as inactive
+- Remove corresponding Redis cache entries
+
+**Configuration:** `shortly.cleanup.interval-minutes` (default: 1 minute)
+
+## Deployment Notes
+
+### Docker Networking
+
+The application uses proper Docker service-to-service communication:
+
+- ✅ Backend → Redis: Uses service name `redis`
+- ✅ Frontend → Backend: Nginx proxies to service name `backend`
+- ❌ Do NOT use `localhost` or `127.0.0.1` for container-to-container communication
+
+### CORS Configuration
+
+CORS is configured for the frontend origin. For EC2 deployment:
+
+1. Set the environment variable:
+   ```bash
+   export SHORTLY_CORS_ALLOWED_ORIGINS=http://your-ec2-ip:8082
+   ```
+
+2. Or update `docker-compose.yml` directly:
+   ```yaml
+   environment:
+     SHORTLY_CORS_ALLOWED_ORIGINS: http://your-ec2-ip:8082
+   ```
+
+### Base URL Configuration
+
+For EC2 deployment, set the base URL to your EC2 public IP:
+
+```bash
+export SHORTLY_BASE_URL=http://your-ec2-public-ip:8080
+```
+
+This ensures generated short URLs point to the correct public endpoint.
 
 ## Current Limitations
 
-This project is useful for learning, but it is not yet production-grade.
+This project is designed for learning and demonstration:
 
-Current limitations:
+- Main storage is in-memory (data lost on restart)
+- No persistent database
+- Simplified rate limiting (not fully atomic)
+- No authentication or ownership model
+- Delete only marks URLs inactive, no audit history
+- Analytics stored in memory only
 
-- main storage is in-memory, so data is lost when the backend restarts
-- no persistent database yet
-- hourly rate limiting is simplified
-- rate-limit updates are not fully atomic
-- no authentication or ownership model
-- delete marks URLs inactive but does not provide audit/history
-- click analytics are stored in memory only
+## Next Steps for Production
 
-## Good Next Steps
+To evolve this into a production-ready system:
 
-If you want to evolve this into a stronger system design project, the next improvements would be:
+1. Add persistent database (PostgreSQL, MongoDB)
+2. Use Redis atomic operations (Lua scripts) for rate limiting
+3. Add authentication and URL ownership
+4. Implement proper analytics persistence
+5. Add comprehensive tests
+6. Support custom domains
+7. Add monitoring and observability
+8. Implement URL validation and security checks
+9. Add admin dashboard
 
-- replace in-memory maps with PostgreSQL or another persistent database
-- use Redis atomic counters or Lua scripts for robust rate limiting
-- add proper analytics persistence
-- add tests for controller/service flows
-- support custom domains
-- add admin or ownership features for managing URLs
-- add observability/metrics
+## License
 
-## Development
+This project is for educational purposes.
 
-### Backend
+## Author
 
-```powershell
-cd backend
-mvn test
-mvn spring-boot:run
-```
-
-### Frontend
-
-```powershell
-cd frontend
-npm install
-npm start
-```
-
-Frontend dev server:
-
-- `http://localhost:4200`
-
-Backend API:
-
-- `http://localhost:8080`
+Built by DeepAX

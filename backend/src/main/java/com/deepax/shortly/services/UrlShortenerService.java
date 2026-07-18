@@ -1,13 +1,11 @@
-package com.shahbytes.tinylink.services;
+package com.deepax.shortly.services;
 
-import com.shahbytes.tinylink.controllers.UrlStatsResponse;
-import com.shahbytes.tinylink.dto.ShortenUrlRequest;
-import com.shahbytes.tinylink.dto.ShortenUrlResponse;
-import com.shahbytes.tinylink.dto.UrlAnalyticsResponse;
-import com.shahbytes.tinylink.models.ClickEvent;
-import com.shahbytes.tinylink.models.UrlData;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+import com.deepax.shortly.controllers.UrlStatsResponse;
+import com.deepax.shortly.dto.ShortenUrlRequest;
+import com.deepax.shortly.dto.ShortenUrlResponse;
+import com.deepax.shortly.dto.UrlAnalyticsResponse;
+import com.deepax.shortly.models.ClickEvent;
+import com.deepax.shortly.models.UrlData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,16 +32,16 @@ public class UrlShortenerService {
 
     private final Map<String, List<ClickEvent>> clickAnalytics = new ConcurrentHashMap<>();
 
-    @Value("${tinylink.base-url}")
+    @Value("${shortly.base-url}")
     private String baseUrl;
 
-    @Value("${tinylink.short-code.length}")
+    @Value("${shortly.short-code.length}")
     private int shortCodeLength;
 
-    @Value("${tinylink.short-code.max-attempts}")
+    @Value("${shortly.short-code.max-attempts}")
     private int maxGenerationAttempts;
 
-    @Value("${tinylink.cache.ttl-minutes}")
+    @Value("${shortly.cache.ttl-minutes}")
     private int cacheTtlMinutes;
 
     private static final String BASE_62_CHARS =

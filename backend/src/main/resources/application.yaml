@@ -1,10 +1,10 @@
 spring:
   application:
-    name: tinylink
+    name: shortly
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
       timeout: 2000ms
       lettuce:
         pool:
@@ -14,8 +14,10 @@ spring:
 server:
   port: 8080
 
-tinylink:
-  base-url: http://localhost:8080
+shortly:
+  base-url: ${SHORTLY_BASE_URL:http://localhost:8080}
+  cors:
+    allowed-origins: ${SHORTLY_CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:8082}
   short-code:
     length: 6
     max-attempts: 10
@@ -30,7 +32,7 @@ tinylink:
 
 logging:
   level:
-    com.shahbytes.tinylink: DEBUG
+    com.deepax.shortly: DEBUG
     org.springframework.data.redis: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"

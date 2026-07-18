@@ -1,4 +1,4 @@
-package com.shahbytes.tinylink.models;
+package com.deepax.shortly.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
